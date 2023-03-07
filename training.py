@@ -4,7 +4,7 @@ Created on Tue Feb 28 15:36:24 2023
 @author: daniel
 """
 
-import caffe
+from caffe import layers
 import numpy as np
 
 #define function that loads data
@@ -19,26 +19,30 @@ import numpy as np
 # this should match the paper's figure 6
 
 
-# the following is an example of a similar network and needs to be modified
 net = caffe.NetSpec()
-net.data = caffe.layers.Input(name='data', shape=[2, 3, 224, 224])
-net.conv1 = caffe.layers.Convolution(name='conv1', kernel_size=11, num_output=96, stride=2)
-net.relu1 = caffe.layers.ReLU(name='relu1', in_place=True)
-net.pool1 = caffe.layers.Pooling(name='pool1', pool=caffe.params.Pooling.MAX, kernel_size=3, stride=2)
-net.norm1 = caffe.layers.LRN(name='norm1', local_size=5, alpha=1e-4, beta=0.75)
-net.conv2 = caffe.layers.Convolution(name='conv2', kernel_size=5, num_output=256, stride=1, pad=2, weight_filler=dict(type='xavier'))
-net.relu2 = caffe.layers.ReLU(name='relu2', in_place=True)
-net.pool2 = caffe.layers.Pooling(name='pool2', pool=caffe.params.Pooling.MAX, kernel_size=3, stride=2)
-net.norm2 = caffe.layers.LRN(name='norm2', local_size=5, alpha=1e-4, beta=0.75)
-net.conv3 = caffe.layers.Convolution(name='conv3', kernel_size=3, num_output=384, stride=1, pad=1, weight_filler=dict(type='xavier'))
-net.relu3 = caffe.layers.ReLU(name='relu3', in_place=True)
-net.conv4 = caffe.layers.Convolution(name='conv4', kernel_size=3, num_output=384, stride=1, pad=1, weight_filler=dict(type='xavier'))
-net.relu4 = caffe.layers.ReLU(name='relu4', in_place=True)
-net.conv5 = caffe.layers.Convolution(name='conv5', kernel_size=3, num_output=256, stride=1, pad=1, weight_filler=dict(type='xavier'))
-net.relu5 = caffe.layers.ReLU(name='relu5', in_place=True)
-net.pool5 = caffe.layers.Pooling(name='pool5', pool=caffe.params.Pooling.MAX, kernel_size=3, stride=2)
-net.fc6 = caffe.layers.InnerProduct(name='fc6', num_output=4096, weight_filler=dict(type='xavier'))
-net.relu6 = caffe.layers.ReLU(name='relu6', in_place=True)
+
+# adjust input layer to size of event data
+net.data = caffe.layers.Input(name='data path', shape=[2, 3, 224, 224])
+
+net.conv1 = layers.Convolution(net.data, name='conv1', kernel_size=7, stride=2)
+net.pool1 = layers.Pooling(net.conv1, name='pool1', kernel_size=3, stride=2)  
+net.lrn1 = layers.LRN(net.pool1, name='lrn1') #figure out required inputs here
+net.conv2 = layers.Convolution(net.lrn1,name='conv2', kernel_size=1)
+net.conv3 = layers.Convolution(net.conv2, name='conv3', kernel_size=3)
+net.lrn2 = layers.LRN(net.conv3, name='lrn2')
+net.pool2 = layers.Pooling(net.lrn2, name='pool2', kernel_size=3, stride=2)
+# ADD INCEPTION MODULES -- see figure 1
+net.inception1 = None
+net.inception2 = None
+net.pool3 = layers.Pooling(net.inception2, name='pool3', kernel_size = 3, stride=2)
+# inception module
+net.inception3 = None
+net.pool4 = layers.Pooling(net.inception3, name='pool4', kernel_h=6, kernel_w=5, pool=AVE)
+net.softmax = layers.softmax(net.pool4, name='softmax')
+
+net.to_proto() #saves NN settings/weights/training data (?)
+
+#implement multinomial logistic loss
 
 # save training data in file 
 
