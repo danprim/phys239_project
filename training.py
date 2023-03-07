@@ -3,7 +3,14 @@ Created on Tue Feb 28 15:36:24 2023
 
 @author: daniel
 """
-
+# Packages and dependencies
+from __future__ import print_function
+import ROOT
+from ROOT import TChain
+from larcv import larcv
+import numpy as np
+import matplotlib.pyplot as plt
+#%matplotlib inline
 import caffe
 import numpy as np
 
